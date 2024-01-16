@@ -1,39 +1,55 @@
 ﻿using Application.Abstractions;
 using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
 public class PostRepository : IPostRepository
 {
-    public readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _context;
 
     public PostRepository( ApplicationDbContext context)
     {
         this._context = context;
     }
 
-    public Task<ICollection<Post>> GetAll()
+    public async Task<ICollection<Post>> GetAll()
     {
-        throw new NotImplementedException();
+        return await _context.Posts.ToListAsync();
+    }
+    public async Task<Post?> GetById(int postId)
+    {
+        return await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
     }
 
-    public Task<Post> GetWithComments(int postId)
+    public async Task<Post> Create(Post postData)
     {
-        throw new NotImplementedException();
+        _context.Posts.Add(postData);
+        await _context.SaveChangesAsync();
+        return postData;
     }
 
-    public Task<Post> Create(Post postData)
+    public async Task<Post?> Update(Post updateData, int postId)
     {
-        throw new NotImplementedException();
+        var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+        if (post != null)
+        {
+            post.Content = updateData.Content;
+            post.Title = updateData.Title;
+            post.LastEditDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return post;
+        }
+        return null;
     }
 
-    public Task<Post> Update(string updatedContent, int postId)
+    public async Task Delete(int postId)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task<Post> Delete(int postId)
-    {
-        throw new NotImplementedException();
+        var post = _context.Posts.FirstOrDefault(p => p.Id == postId);
+        if (post != null)
+        {
+            _context.Posts.Remove(post);
+            await _context.SaveChangesAsync();
+        }
     }
 }
